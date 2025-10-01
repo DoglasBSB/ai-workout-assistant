@@ -53,3 +53,23 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Erro no servidor." });
   }
 };
+
+exports.getMe = async (req, res) => {
+  try {
+    // O ID do usuário é obtido pelo middleware de autenticação a partir do token
+    const user = await prisma.user.findUnique({
+      where: { id: req.user },
+      // Seleciona apenas os campos seguros para retornar
+      select: { id: true, email: true, name: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuário não encontrado." });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Erro ao buscar dados do usuário:", error);
+    res.status(500).json({ message: "Erro no servidor." });
+  }
+};

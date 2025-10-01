@@ -9,15 +9,24 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      // Aqui você pode adicionar uma lógica para validar o token com o backend
-      // Por simplicidade, vamos apenas assumir que se o token existe, o usuário está autenticado
-      setIsAuthenticated(true);
-      // Em um app real, você faria uma requisição para /api/auth/me para obter os dados do usuário
-      setUser({ email: 'user@example.com' }); // Placeholder
-    }
-    setLoading(false);
+    const validateToken = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await api.get('/auth/me');
+          setUser(response.data);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error('Token inválido, fazendo logout:', error);
+          localStorage.removeItem('token');
+          setIsAuthenticated(false);
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
+
+    validateToken();
   }, []);
 
   const login = async (email, password) => {

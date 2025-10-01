@@ -1,10 +1,8 @@
 const { PrismaClient } = require("@prisma/client");
-const OpenAI = require("openai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const prisma = new PrismaClient();
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 // Função auxiliar para gerar o prompt para a IA
 const generatePrompt = (profile) => {
@@ -38,7 +36,7 @@ const generatePrompt = (profile) => {
 };
 
 exports.saveProfile = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user;
   const { objective, level, availableEquipment, restrictions } = req.body;
 
   try {
@@ -66,7 +64,7 @@ exports.saveProfile = async (req, res) => {
 };
 
 exports.generateWorkout = async (req, res) => {
-  const userId = req.user.id; // Obtido do middleware de autenticação
+  const userId = req.user; // Obtido do middleware de autenticação
 
   try {
     const profile = await prisma.profile.findUnique({
@@ -79,27 +77,33 @@ exports.generateWorkout = async (req, res) => {
 
     const prompt = generatePrompt(profile);
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4", // Ou outro modelo disponível, como "gpt-3.5-turbo"
-      messages: [{
-        role: "user",
-        content: prompt
-      }],
-      response_format: { type: "json_object" },
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    const workoutData = JSON.parse(completion.choices[0].message.content);
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    try {
+      const cleanedText = text.replace(/```json/g, '').replace(/```/g, '');
+      const workoutData = JSON.parse(cleanedText);
+      res.status(200).json(workoutData);
+    } catch (jsonError) {
+      console.error("Erro ao parsear JSON do Gemini:", jsonError);
+      console.error("Resposta recebida do Gemini:", text);
+      res.status(500).json({ 
+        message: "Erro ao processar a resposta da IA. A resposta não é um JSON válido.",
+        rawResponse: text 
+      });
+    }
 
-    // O treino gerado pela IA não é salvo automaticamente, apenas retornado para revisão
-    res.status(200).json({ workout: workoutData.workout });
   } catch (error) {
-    console.error("Erro ao gerar treino com IA:", error);
+    console.error("Erro ao gerar treino com Gemini:", error);
     res.status(500).json({ message: "Erro ao gerar treino personalizado." });
   }
 };
 
 exports.saveWorkout = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user;
   const { workout } = req.body; // O treino completo enviado pelo frontend
 
   try {
@@ -117,7 +121,7 @@ exports.saveWorkout = async (req, res) => {
 };
 
 exports.getWorkouts = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user;
 
   try {
     const workouts = await prisma.workout.findMany({
@@ -133,7 +137,7 @@ exports.getWorkouts = async (req, res) => {
 
 exports.getWorkoutById = async (req, res) => {
   const { id } = req.params;
-  const userId = req.user.id;
+  const userId = req.user;
 
   try {
     const workout = await prisma.workout.findUnique({
@@ -151,7 +155,7 @@ exports.getWorkoutById = async (req, res) => {
 };
 
 exports.updateWorkoutHistory = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user;
   const { workoutId, feedback, notes } = req.body;
 
   try {
@@ -179,7 +183,7 @@ exports.updateWorkoutHistory = async (req, res) => {
 };
 
 exports.getWorkoutHistory = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user;
 
   try {
     const history = await prisma.history.findMany({
