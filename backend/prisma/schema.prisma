@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  name      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  profile   Profile? // Um usuário pode ter um perfil. O relacionamento é definido no Profile.
+  workouts  Workout[]
+  history   History[]
+}
+
+model Profile {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id]) // A chave estrangeira e a relação são definidas aqui
+  objective          String
+  level              String
+  availableEquipment String[]
+  restrictions       String?
+  updatedAt          DateTime @updatedAt
+}
+
+model Workout {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+  workoutData Json
+  history    History[]
+}
+
+model History {
+  id          String   @id @default(uuid())
+  workoutId   String
+  workout     Workout  @relation(fields: [workoutId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  completedAt DateTime @default(now())
+  feedback    String?
+  notes       String?
+}

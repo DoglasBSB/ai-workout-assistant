@@ -1,0 +1,195 @@
+const { PrismaClient } = require("@prisma/client");
+const OpenAI = require("openai");
+
+const prisma = new PrismaClient();
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Função auxiliar para gerar o prompt para a IA
+const generatePrompt = (profile) => {
+  const { objective, level, availableEquipment, restrictions } = profile;
+  return `Gere um plano de treino personalizado para um indivíduo com os seguintes dados:
+  - Objetivo: ${objective}
+  - Nível: ${level}
+  - Equipamentos disponíveis: ${availableEquipment.join(", ") || "Nenhum"}
+  - Restrições: ${restrictions || "Nenhuma"}
+
+  O treino deve ser detalhado, incluindo exercícios, séries, repetições, tempo de descanso e dicas de execução. Formate a resposta como um objeto JSON, com uma chave 'workout' que contém um array de objetos, onde cada objeto representa um dia de treino e inclui 'day', 'focus' e 'exercises' (um array de objetos com 'name', 'sets', 'reps', 'rest' e 'tips').
+  Exemplo de formato:
+  {
+    "workout": [
+      {
+        "day": "Dia 1",
+        "focus": "Peito e Tríceps",
+        "exercises": [
+          {
+            "name": "Supino Reto com Barra",
+            "sets": "3-4",
+            "reps": "8-12",
+            "rest": "60-90s",
+            "tips": "Mantenha a barra na linha do meio do peito."
+          }
+        ]
+      }
+    ]
+  }
+  `;
+};
+
+exports.saveProfile = async (req, res) => {
+  const userId = req.user.id;
+  const { objective, level, availableEquipment, restrictions } = req.body;
+
+  try {
+    const profile = await prisma.profile.upsert({
+      where: { userId },
+      update: {
+        objective,
+        level,
+        availableEquipment,
+        restrictions,
+      },
+      create: {
+        userId,
+        objective,
+        level,
+        availableEquipment,
+        restrictions,
+      },
+    });
+    res.status(200).json({ message: "Perfil salvo com sucesso!", profile });
+  } catch (error) {
+    console.error("Erro ao salvar perfil:", error);
+    res.status(500).json({ message: "Erro ao salvar o perfil." });
+  }
+};
+
+exports.generateWorkout = async (req, res) => {
+  const userId = req.user.id; // Obtido do middleware de autenticação
+
+  try {
+    const profile = await prisma.profile.findUnique({
+      where: { userId },
+    });
+
+    if (!profile) {
+      return res.status(404).json({ message: "Perfil do usuário não encontrado. Por favor, complete seu perfil primeiro." });
+    }
+
+    const prompt = generatePrompt(profile);
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4", // Ou outro modelo disponível, como "gpt-3.5-turbo"
+      messages: [{
+        role: "user",
+        content: prompt
+      }],
+      response_format: { type: "json_object" },
+    });
+
+    const workoutData = JSON.parse(completion.choices[0].message.content);
+
+    // O treino gerado pela IA não é salvo automaticamente, apenas retornado para revisão
+    res.status(200).json({ workout: workoutData.workout });
+  } catch (error) {
+    console.error("Erro ao gerar treino com IA:", error);
+    res.status(500).json({ message: "Erro ao gerar treino personalizado." });
+  }
+};
+
+exports.saveWorkout = async (req, res) => {
+  const userId = req.user.id;
+  const { workout } = req.body; // O treino completo enviado pelo frontend
+
+  try {
+    const savedWorkout = await prisma.workout.create({
+      data: {
+        userId,
+        workoutData: workout,
+      },
+    });
+    res.status(201).json({ message: "Treino salvo com sucesso!", workout: savedWorkout });
+  } catch (error) {
+    console.error("Erro ao salvar treino:", error);
+    res.status(500).json({ message: "Erro ao salvar o treino." });
+  }
+};
+
+exports.getWorkouts = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const workouts = await prisma.workout.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+    res.status(200).json({ workouts });
+  } catch (error) {
+    console.error("Erro ao buscar treinos:", error);
+    res.status(500).json({ message: "Erro ao buscar treinos." });
+  }
+};
+
+exports.getWorkoutById = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const workout = await prisma.workout.findUnique({
+      where: { id, userId },
+    });
+
+    if (!workout) {
+      return res.status(404).json({ message: "Treino não encontrado." });
+    }
+    res.status(200).json({ workout });
+  } catch (error) {
+    console.error("Erro ao buscar treino por ID:", error);
+    res.status(500).json({ message: "Erro ao buscar treino." });
+  }
+};
+
+exports.updateWorkoutHistory = async (req, res) => {
+  const userId = req.user.id;
+  const { workoutId, feedback, notes } = req.body;
+
+  try {
+    const workout = await prisma.workout.findUnique({
+      where: { id: workoutId, userId },
+    });
+
+    if (!workout) {
+      return res.status(404).json({ message: "Treino não encontrado." });
+    }
+
+    const historyEntry = await prisma.history.create({
+      data: {
+        workoutId,
+        userId,
+        feedback,
+        notes,
+      },
+    });
+    res.status(201).json({ message: "Histórico de treino atualizado com sucesso!", historyEntry });
+  } catch (error) {
+    console.error("Erro ao atualizar histórico de treino:", error);
+    res.status(500).json({ message: "Erro ao atualizar histórico de treino." });
+  }
+};
+
+exports.getWorkoutHistory = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const history = await prisma.history.findMany({
+      where: { userId },
+      include: { workout: true }, // Inclui os dados do treino associado
+      orderBy: { completedAt: "desc" },
+    });
+    res.status(200).json({ history });
+  } catch (error) {
+    console.error("Erro ao buscar histórico de treinos:", error);
+    res.status(500).json({ message: "Erro ao buscar histórico de treinos." });
+  }
+};

@@ -1,0 +1,182 @@
+Guia de Publicação (Deploy)
+Deploy do Backend (Ex: Railway, Heroku, Vercel Functions)
+Para o deploy do backend, você pode usar plataformas como Railway, Heroku ou Vercel Functions. O processo geral envolve:
+Crie um novo projeto na plataforma de sua escolha.
+Conecte seu repositório Git (onde o código do backend está).
+Configure as variáveis de ambiente (DATABASE_URL, JWT_SECRET, OPENAI_API_KEY) na plataforma.
+Configure o comando de build (se necessário, geralmente npm install ou yarn install).
+Configure o comando de inicialização (geralmente npm start ou node dist/server.js se você transpilar o código).
+Conecte seu banco de dados PostgreSQL (pode ser um serviço gerenciado pela própria plataforma ou um provedor externo como ElephantSQL).
+Deploy do Frontend (Ex: Vercel, Netlify)
+Para o deploy do frontend, plataformas como Vercel ou Netlify são ideais para aplicações React estáticas:
+Crie um novo projeto na plataforma de sua escolha.
+Conecte seu repositório Git (onde o código do frontend está).
+Configure as variáveis de ambiente (VITE_API_BASE_URL) na plataforma, apontando para a URL pública do seu backend.
+Configure o comando de build (geralmente npm run build ou yarn build).
+Configure o diretório de saída (geralmente dist).
+Contribuição
+Sinta-se à vontade para contribuir com este projeto. Por favor, siga as diretrizes de contribuição e o código de conduta.
+Licença
+Este projeto está licenciado sob a Licença MIT. Veja o arquivo LICENSE para mais detalhes.
+
+Desenvolvido por Manus AI
+Plain Text
+
+**Conteúdo do arquivo `arquitetura_assistente_treinos.md`:**
+
+```markdown
+# Arquitetura do Aplicativo: Assistente de Treinos com IA
+
+## 1. Visão Geral
+
+Este documento descreve a arquitetura de software para o aplicativo "Assistente de Treinos com IA". O objetivo é criar uma aplicação robusta, escalável e multiplataforma (iOS e Android) que ofereça treinos personalizados gerados por inteligência artificial, com base nas metas e condições individuais de cada usuário.
+
+## 2. Stack Tecnológica Proposta
+
+A seleção da stack tecnológica visa otimizar o desenvolvimento, a manutenção e a experiência do usuário, aproveitando tecnologias modernas e eficientes.
+
+| Componente          | Tecnologia Recomendada | Justificativa                                                                                             |
+| ------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Frontend**        | React Native           | Permite o desenvolvimento de aplicativos nativos para iOS e Android a partir de um único código-base, economizando tempo e recursos. |
+| **Backend**         | Node.js com Express    | Oferece alta performance para operações de I/O, ideal para uma API que se comunicará com o banco de dados e a IA. É amplamente adotado e possui um ecossistema maduro. |
+| **Banco de Dados**  | PostgreSQL             | Um sistema de banco de dados relacional poderoso e de código aberto, excelente para estruturar dados complexos como perfis de usuário, treinos e históricos. |
+| **Autenticação**    | Auth0                  | Simplifica a implementação de login, cadastro e segurança, oferecendo integração social (Google, Apple) e gerenciamento de usuários de forma segura. |
+| **Inteligência Artificial** | OpenAI API (GPT-4)     | Fornece acesso a modelos de linguagem avançados para a geração de rotinas de treino personalizadas e dinâmicas, interpretando as respostas do questionário. |
+
+## 3. Arquitetura do Sistema
+
+O sistema será modelado em uma arquitetura de microsserviços, garantindo a separação de responsabilidades e a escalabilidade.
+
+- **Serviço de Usuários e Autenticação:** Responsável pelo cadastro, login (via Auth0) e gerenciamento de perfis de usuário.
+- **Serviço de Treinos:** Contém a lógica de negócio para criar, buscar e gerenciar os treinos. Este serviço irá interagir com a OpenAI API.
+- **Serviço de Acompanhamento:** Armazena e processa o histórico de treinos e o progresso do usuário.
+
+```mermaid
+graph TD
+    A[Frontend - React Native] -->|Requisições HTTPS| B(API Gateway)
+
+    B --> C{Serviço de Autenticação}
+    B --> D{Serviço de Treinos}
+    B --> E{Serviço de Acompanhamento}
+
+    C -->|Valida/Cria Usuário| F[Auth0 & PostgreSQL]
+    D -->|Gera Treino| G[OpenAI API]
+    D -->|Salva/Busca Treino| F
+    E -->|Salva/Busca Histórico| F
+4. Estrutura de Dados (Schema do Banco de Dados)
+Tabela: users
+id (UUID, Chave Primária)
+auth0_id (String, Único)
+email (String, Único)
+name (String)
+created_at (Timestamp)
+Tabela: profiles
+user_id (UUID, Chave Estrangeira -> users.id)
+userId String @unique
+user User @relation(fields: [userId], references: [id])
+objective (String) - ex: 'hipertrofia', 'perda_de_peso'
+level (String) - ex: 'iniciante', 'intermediario', 'avancado'
+availableEquipment (Array de Strings)
+restrictions (Texto)
+updatedAt DateTime @updatedAt
+Tabela: workouts
+id (UUID, Chave Primária)
+userId String
+user User @relation(fields: [userId], references: [id])
+createdAt DateTime @default(now())
+workoutData Json
+history History[]
+Tabela: history
+id (UUID, Chave Primária)
+workoutId String
+workout Workout @relation(fields: [workoutId], references: [id])
+userId String
+user User @relation(fields: [userId], references: [id])
+completedAt DateTime @default(now())
+feedback String?
+notes String?
+5. Próximos Passos
+Com a arquitetura definida, o próximo passo é a configuração do ambiente de desenvolvimento, incluindo a criação dos repositórios, a instalação das dependências e a configuração inicial dos projetos de frontend e backend.
+Plain Text
+
+**Exemplo de estrutura de arquivos para o `backend`:**
+
+backend/
+├── src/
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   └── workoutController.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   └── workoutRoutes.js
+│   ├── services/
+│   │   ├── authService.js
+│   │   ├── openaiService.js
+│   │   └── workoutService.js
+│   ├── middleware/
+│   │   └── authMiddleware.js
+│   ├── utils/
+│   │   └── jwt.js
+│   └── app.js
+├── prisma/
+│   └── schema.prisma
+├── .env.example
+├── package.json
+└── server.js
+Plain Text
+
+**Exemplo de `backend/prisma/schema.prisma`:**
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  name      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  profile   Profile?  @relation(fields: [profileId], references: [id])
+  profileId String?   @unique
+  workouts  Workout[]
+  history   History[]
+}
+
+model Profile {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id])
+  objective          String
+  level              String
+  availableEquipment String[]
+  restrictions       String?
+  updatedAt          DateTime @updatedAt
+}
+
+model Workout {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+  workoutData Json
+  history    History[]
+}
+
+model History {
+  id          String   @id @default(uuid())
+  workoutId   String
+  workout     Workout  @relation(fields: [workoutId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  completedAt DateTime @default(now())
+  feedback    String?
+  notes       String?
+}
