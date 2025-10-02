@@ -1,7 +1,7 @@
 // File: backend/src/controllers/workoutController.js
 
 const { PrismaClient } = require("@prisma/client");
-const { GoogleGenerativeAI } = require("@google/generative-ai"); // <-- CORREÇÃO: Importado no topo
+const { GoogleGenerativeAI } = require("@google/generative-ai"); 
 
 const prisma = new PrismaClient();
 
@@ -14,7 +14,8 @@ const generatePrompt = (profile) => {
   - Equipamentos disponíveis: ${availableEquipment.join(", ") || "Nenhum"}
   - Restrições: ${restrictions || "Nenhuma"}
 
-  O treino deve ser detalhado, incluindo exercícios, séries, repetições, tempo de descanso e dicas de execução. Formate a resposta como um objeto JSON válido, sem nenhum texto ou formatação extra como \`\`\`json. O objeto deve ter uma chave 'workout' que contém um array de objetos, onde cada objeto representa um dia de treino e inclui 'day', 'focus' e 'exercises' (um array de objetos com 'name', 'sets', 'reps', 'rest' e 'tips').
+  O treino deve ser detalhado, incluindo exercícios, séries, repetições, tempo de descanso e dicas de execução. Formate a resposta como um objeto JSON válido, sem nenhum texto ou formatação extra como 
+  . O objeto deve ter uma chave 'workout' que contém um array de objetos, onde cada objeto representa um dia de treino e inclui 'day', 'focus' e 'exercises' (um array de objetos com 'name', 'sets', 'reps', 'rest' e 'tips').
   Exemplo de formato:
   {
     "workout": [
@@ -197,9 +198,11 @@ exports.getWorkoutById = async (req, res) => {
 
 exports.updateWorkoutHistory = async (req, res) => {
   const userId = req.user;
-  const { workoutId, feedback, notes } = req.body;
+  const { id: workoutId } = req.params; // Correção: Obter ID da rota
+  const { feedback, notes } = req.body;
 
   try {
+    // 1. Verificar se o treino existe e pertence ao usuário
     const workout = await prisma.workout.findUnique({
       where: { id: workoutId, userId },
     });
@@ -208,12 +211,14 @@ exports.updateWorkoutHistory = async (req, res) => {
       return res.status(404).json({ message: "Treino não encontrado." });
     }
 
+    // 2. Criar a entrada no histórico
     const historyEntry = await prisma.history.create({
       data: {
-        workoutId,
+        workoutId, // Usar o ID verificado
         userId,
         feedback,
         notes,
+        completedAt: new Date(),
       },
     });
     res.status(201).json({ message: "Histórico de treino atualizado com sucesso!", historyEntry });
@@ -232,6 +237,7 @@ exports.getWorkoutHistory = async (req, res) => {
       include: { workout: true },
       orderBy: { completedAt: "desc" },
     });
+    console.log("Histórico retornado:", history); // <-- DEBUG
     res.status(200).json({ history });
   } catch (error) {
     console.error("Erro ao buscar histórico de treinos:", error);
