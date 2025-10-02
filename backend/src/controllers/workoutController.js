@@ -102,7 +102,7 @@ exports.generateWorkout = async (req, res) => {
   }
 };
 
-exports.saveWorkout = async (req, res) => {
+/* exports.saveWorkout = async (req, res) => {
   const userId = req.user;
   const { workout } = req.body; 
 
@@ -114,6 +114,47 @@ exports.saveWorkout = async (req, res) => {
       },
     });
     res.status(201).json({ message: "Treino salvo com sucesso!", workout: savedWorkout });
+  } catch (error) {
+    console.error("Erro ao salvar treino:", error);
+    res.status(500).json({ message: "Erro ao salvar o treino." });
+  }
+}; */
+
+exports.saveWorkout = async (req, res) => {
+  const userId = req.user;
+  const { workout, workoutId } = req.body; // workoutId é opcional
+
+  try {
+    let savedWorkout;
+
+    if (workoutId) {
+      // Se houver workoutId, podemos criar uma cópia ou atualizar (aqui vamos criar uma cópia)
+      const existingWorkout = await prisma.workout.findUnique({
+        where: { id: workoutId }
+      });
+
+      if (!existingWorkout) {
+        return res.status(404).json({ message: "Treino original não encontrado." });
+      }
+
+      savedWorkout = await prisma.workout.create({
+        data: {
+          userId,
+          workoutData: workout
+        }
+      });
+    } else {
+      // Novo treino gerado pela IA
+      savedWorkout = await prisma.workout.create({
+        data: {
+          userId,
+          workoutData: workout
+        }
+      });
+    }
+
+    res.status(201).json({ message: "Treino salvo com sucesso!", workout: savedWorkout });
+
   } catch (error) {
     console.error("Erro ao salvar treino:", error);
     res.status(500).json({ message: "Erro ao salvar o treino." });

@@ -1,17 +1,40 @@
+// File: backend/src/routes/workouts.js
+
 const express = require("express");
-const { generateWorkout, getWorkouts, getWorkoutById, saveWorkout, updateWorkoutHistory, saveProfile, getWorkoutHistory } = require("../controllers/workoutController");
+const {
+  generateWorkout,
+  getWorkouts,
+  getWorkoutById,
+  saveWorkout,
+  updateWorkoutHistory,
+  saveProfile,
+  getWorkoutHistory
+} = require("../controllers/workoutController");
+
 const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 router.use(authMiddleware); // Todas as rotas abaixo exigem autenticação
 
-router.post("/profile", saveProfile); // Nova rota para salvar/atualizar o perfil
+// Perfil do usuário
+router.post("/profile", saveProfile); // Salvar/atualizar perfil
+
+// Gerar treino com IA
 router.post("/generate", generateWorkout);
+
+// Treinos do usuário
 router.get("/", getWorkouts);
 router.get("/:id", getWorkoutById);
-router.post("/:id/save", saveWorkout); // Para salvar um treino gerado
-router.post("/:id/history", updateWorkoutHistory); // Para registrar o histórico de um treino
-router.get("/history", getWorkoutHistory); // Nova rota para buscar o histórico de treinos
+
+// Salvar treino
+router.post("/save", saveWorkout); // Novo endpoint para salvar treino sem ID
+
+// Histórico de treinos
+router.get("/history", getWorkoutHistory); // Buscar histórico de treinos
+router.post("/:id/history", updateWorkoutHistory); // Registrar histórico de um treino
+
+
+
 
 module.exports = router;
