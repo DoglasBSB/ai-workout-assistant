@@ -11,7 +11,7 @@ function HistoryPage() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await api.get('/api/workouts/history');
+        const response = await api.get('/workouts/history');
         console.log('Histórico recebido:', response.data.history);
         setHistory(response.data.history);
       } catch (err) {

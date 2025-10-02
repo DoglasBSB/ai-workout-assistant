@@ -23,6 +23,9 @@ router.post("/profile", saveProfile); // Salvar/atualizar perfil
 // Gerar treino com IA
 router.post("/generate", generateWorkout);
 
+// Histórico de treinos
+router.get("/history", getWorkoutHistory); // Buscar histórico de treinos
+
 // Treinos do usuário
 router.get("/", getWorkouts);
 router.get("/:id", getWorkoutById);
@@ -31,10 +34,6 @@ router.get("/:id", getWorkoutById);
 router.post("/save", saveWorkout); // Novo endpoint para salvar treino sem ID
 
 // Histórico de treinos
-router.get("/history", getWorkoutHistory); // Buscar histórico de treinos
 router.post("/:id/history", updateWorkoutHistory); // Registrar histórico de um treino
-
-
-
 
 module.exports = router;

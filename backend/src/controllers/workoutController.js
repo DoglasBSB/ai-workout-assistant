@@ -237,7 +237,6 @@ exports.getWorkoutHistory = async (req, res) => {
       include: { workout: true },
       orderBy: { completedAt: "desc" },
     });
-    console.log("Histórico retornado:", history); // <-- DEBUG
     res.status(200).json({ history });
   } catch (error) {
     console.error("Erro ao buscar histórico de treinos:", error);

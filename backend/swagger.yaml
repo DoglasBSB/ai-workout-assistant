@@ -1,0 +1,269 @@
+openapi: 3.0.0
+info:
+  title: API Assistente de Treinos com IA
+  description: API para gerenciar usuários, perfis e treinos personalizados gerados por IA.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3001/api
+    description: Servidor de desenvolvimento
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único do usuário.
+        email:
+          type: string
+          format: email
+          description: Email do usuário.
+        name:
+          type: string
+          description: Nome do usuário.
+    Profile:
+      type: object
+      properties:
+        objective:
+          type: string
+          description: Objetivo do treino (ex: 'perda_peso', 'ganho_massa').
+        level:
+          type: string
+          description: Nível de experiência do usuário (ex: 'iniciante', 'intermediario').
+        availableEquipment:
+          type: array
+          items:
+            type: string
+          description: Lista de equipamentos disponíveis.
+        restrictions:
+          type: string
+          description: Restrições físicas ou médicas do usuário.
+    Workout:
+      type: object
+      description: Estrutura de dados do treino gerado pela IA.
+      properties:
+        workout:
+          type: array
+          items:
+            type: object
+            properties:
+              day:
+                type: string
+              focus:
+                type: string
+              exercises:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    sets:
+                      type: string
+                    reps:
+                      type: string
+                    rest:
+                      type: string
+                    tips:
+                      type: string
+    History:
+      type: object
+      properties:
+        feedback:
+          type: string
+          description: Feedback do usuário sobre o treino.
+        notes:
+          type: string
+          description: Anotações adicionais.
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /auth/register:
+    post:
+      summary: Registra um novo usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '201':
+          description: Usuário registrado com sucesso.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Usuário já existe.
+
+  /auth/login:
+    post:
+      summary: Autentica um usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login bem-sucedido.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Credenciais inválidas.
+
+  /auth/me:
+    get:
+      summary: Retorna os dados do usuário autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dados do usuário.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Token inválido ou não fornecido.
+
+  /workouts/profile:
+    post:
+      summary: Salva ou atualiza o perfil do usuário
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Profile'
+      responses:
+        '200':
+          description: Perfil salvo com sucesso.
+
+  /workouts/generate:
+    post:
+      summary: Gera um novo treino com base no perfil do usuário
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Treino gerado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workout'
+        '404':
+          description: Perfil do usuário não encontrado.
+
+  /workouts:
+    get:
+      summary: Lista todos os treinos salvos do usuário
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de treinos.
+
+  /workouts/save:
+    post:
+      summary: Salva um novo treino
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workout'
+      responses:
+        '201':
+          description: Treino salvo com sucesso.
+
+  /workouts/{id}:
+    get:
+      summary: Busca um treino específico pelo ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID do treino.
+      responses:
+        '200':
+          description: Detalhes do treino.
+        '404':
+          description: Treino não encontrado.
+
+  /workouts/history:
+    get:
+      summary: Busca o histórico de treinos concluídos do usuário
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Histórico de treinos.
+
+  /workouts/{id}/history:
+    post:
+      summary: Registra a conclusão de um treino no histórico
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID do treino que foi concluído.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/History'
+      responses:
+        '201':
+          description: Histórico atualizado com sucesso.
+        '404':
+          description: Treino não encontrado.

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "test": "jest"
   },
   "keywords": [],
   "author": "Manus AI",
@@ -21,10 +22,14 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "openai": "^4.47.1",
-    "prisma": "^5.14.0"
+    "prisma": "^5.14.0",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.0",
+    "supertest": "^7.1.4"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
