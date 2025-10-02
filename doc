@@ -3,7 +3,7 @@ Deploy do Backend (Ex: Railway, Heroku, Vercel Functions)
 Para o deploy do backend, você pode usar plataformas como Railway, Heroku ou Vercel Functions. O processo geral envolve:
 Crie um novo projeto na plataforma de sua escolha.
 Conecte seu repositório Git (onde o código do backend está).
-Configure as variáveis de ambiente (DATABASE_URL, JWT_SECRET, OPENAI_API_KEY) na plataforma.
+Configure as variáveis de ambiente (DATABASE_URL, JWT_SECRET, GOOGLE_API_KEY) na plataforma.
 Configure o comando de build (se necessário, geralmente npm install ou yarn install).
 Configure o comando de inicialização (geralmente npm start ou node dist/server.js se você transpilar o código).
 Conecte seu banco de dados PostgreSQL (pode ser um serviço gerenciado pela própria plataforma ou um provedor externo como ElephantSQL).
@@ -41,14 +41,14 @@ A seleção da stack tecnológica visa otimizar o desenvolvimento, a manutençã
 | **Backend**         | Node.js com Express    | Oferece alta performance para operações de I/O, ideal para uma API que se comunicará com o banco de dados e a IA. É amplamente adotado e possui um ecossistema maduro. |
 | **Banco de Dados**  | PostgreSQL             | Um sistema de banco de dados relacional poderoso e de código aberto, excelente para estruturar dados complexos como perfis de usuário, treinos e históricos. |
 | **Autenticação**    | Auth0                  | Simplifica a implementação de login, cadastro e segurança, oferecendo integração social (Google, Apple) e gerenciamento de usuários de forma segura. |
-| **Inteligência Artificial** | OpenAI API (GPT-4)     | Fornece acesso a modelos de linguagem avançados para a geração de rotinas de treino personalizadas e dinâmicas, interpretando as respostas do questionário. |
+| **Inteligência Artificial** | Google Generative AI     | Fornece acesso a modelos de linguagem avançados para a geração de rotinas de treino personalizadas e dinâmicas, interpretando as respostas do questionário. |
 
 ## 3. Arquitetura do Sistema
 
 O sistema será modelado em uma arquitetura de microsserviços, garantindo a separação de responsabilidades e a escalabilidade.
 
 - **Serviço de Usuários e Autenticação:** Responsável pelo cadastro, login (via Auth0) e gerenciamento de perfis de usuário.
-- **Serviço de Treinos:** Contém a lógica de negócio para criar, buscar e gerenciar os treinos. Este serviço irá interagir com a OpenAI API.
+- **Serviço de Treinos:** Contém a lógica de negócio para criar, buscar e gerenciar os treinos. Este serviço irá interagir com a Google Generative AI.
 - **Serviço de Acompanhamento:** Armazena e processa o histórico de treinos e o progresso do usuário.
 
 ```mermaid
@@ -60,7 +60,7 @@ graph TD
     B --> E{Serviço de Acompanhamento}
 
     C -->|Valida/Cria Usuário| F[Auth0 & PostgreSQL]
-    D -->|Gera Treino| G[OpenAI API]
+    D -->|Gera Treino| G[Google Generative AI]
     D -->|Salva/Busca Treino| F
     E -->|Salva/Busca Histórico| F
 4. Estrutura de Dados (Schema do Banco de Dados)
@@ -111,7 +111,6 @@ backend/
 │   │   └── workoutRoutes.js
 │   ├── services/
 │   │   ├── authService.js
-│   │   ├── openaiService.js
 │   │   └── workoutService.js
 │   ├── middleware/
 │   │   └── authMiddleware.js

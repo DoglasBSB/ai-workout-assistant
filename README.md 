@@ -56,6 +56,7 @@ Crie um arquivo .env na raiz do diretório backend com as seguintes variáveis:
 DATABASE_URL="postgresql://user:password@host:port/database?schema=public"
 JWT_SECRET="sua_chave_secreta_jwt_aqui"
 OPENAI_API_KEY="sua_chave_api_openai_aqui"
+#GOOGLE_API_KEY="AIzaSyC2bH5bBOhux6kTechLqPyoHeofRVws9uM"
 PORT=3001
 
 

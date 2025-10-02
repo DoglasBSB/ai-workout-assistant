@@ -83,18 +83,8 @@ exports.generateWorkout = async (req, res) => {
     const response = await result.response;
     const text = response.text();
     
-    try {
-      const cleanedText = text.replace(/```json/g, '').replace(/```/g, '');
-      const workoutData = JSON.parse(cleanedText);
-      res.status(200).json(workoutData);
-    } catch (jsonError) {
-      console.error("Erro ao parsear JSON do Gemini:", jsonError);
-      console.error("Resposta recebida do Gemini:", text);
-      res.status(500).json({ 
-        message: "Erro ao processar a resposta da IA. A resposta não é um JSON válido.",
-        rawResponse: text 
-      });
-    }
+    const workoutData = JSON.parse(text);
+    res.status(200).json(workoutData);
 
   } catch (error) {
     console.error("Erro ao gerar treino com Gemini:", error);
