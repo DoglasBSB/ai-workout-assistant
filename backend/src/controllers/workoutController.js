@@ -1,8 +1,9 @@
+// File: backend/src/controllers/workoutController.js
+
 const { PrismaClient } = require("@prisma/client");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenerativeAI } = require("@google/generative-ai"); // <-- CORREÇÃO: Importado no topo
 
 const prisma = new PrismaClient();
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 // Função auxiliar para gerar o prompt para a IA
 const generatePrompt = (profile) => {
@@ -13,7 +14,7 @@ const generatePrompt = (profile) => {
   - Equipamentos disponíveis: ${availableEquipment.join(", ") || "Nenhum"}
   - Restrições: ${restrictions || "Nenhuma"}
 
-  O treino deve ser detalhado, incluindo exercícios, séries, repetições, tempo de descanso e dicas de execução. Formate a resposta como um objeto JSON, com uma chave 'workout' que contém um array de objetos, onde cada objeto representa um dia de treino e inclui 'day', 'focus' e 'exercises' (um array de objetos com 'name', 'sets', 'reps', 'rest' e 'tips').
+  O treino deve ser detalhado, incluindo exercícios, séries, repetições, tempo de descanso e dicas de execução. Formate a resposta como um objeto JSON válido, sem nenhum texto ou formatação extra como \`\`\`json. O objeto deve ter uma chave 'workout' que contém um array de objetos, onde cada objeto representa um dia de treino e inclui 'day', 'focus' e 'exercises' (um array de objetos com 'name', 'sets', 'reps', 'rest' e 'tips').
   Exemplo de formato:
   {
     "workout": [
@@ -64,9 +65,14 @@ exports.saveProfile = async (req, res) => {
 };
 
 exports.generateWorkout = async (req, res) => {
-  const userId = req.user; // Obtido do middleware de autenticação
+  const userId = req.user; 
 
   try {
+    // --- INÍCIO DAS CORREÇÕES ---
+    // CORREÇÃO 1: Usa a classe importada e passa a API Key diretamente como string.
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+    // --- FIM DAS CORREÇÕES ---
+
     const profile = await prisma.profile.findUnique({
       where: { userId },
     });
@@ -76,14 +82,18 @@ exports.generateWorkout = async (req, res) => {
     }
 
     const prompt = generatePrompt(profile);
-
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
     
-    const workoutData = JSON.parse(text);
+    // Extrai a parte do JSON da resposta de texto
+    const startIndex = text.indexOf('{');
+    const endIndex = text.lastIndexOf('}');
+    const jsonText = text.substring(startIndex, endIndex + 1);
+    
+    const workoutData = JSON.parse(jsonText);
     res.status(200).json(workoutData);
 
   } catch (error) {
@@ -94,7 +104,7 @@ exports.generateWorkout = async (req, res) => {
 
 exports.saveWorkout = async (req, res) => {
   const userId = req.user;
-  const { workout } = req.body; // O treino completo enviado pelo frontend
+  const { workout } = req.body; 
 
   try {
     const savedWorkout = await prisma.workout.create({
@@ -140,7 +150,7 @@ exports.getWorkoutById = async (req, res) => {
     res.status(200).json({ workout });
   } catch (error) {
     console.error("Erro ao buscar treino por ID:", error);
-    res.status(500).json({ message: "Erro ao buscar treino." });
+    res.status(500).json({ message: "Erro ao buscar treino por ID." });
   }
 };
 
@@ -178,7 +188,7 @@ exports.getWorkoutHistory = async (req, res) => {
   try {
     const history = await prisma.history.findMany({
       where: { userId },
-      include: { workout: true }, // Inclui os dados do treino associado
+      include: { workout: true },
       orderBy: { completedAt: "desc" },
     });
     res.status(200).json({ history });

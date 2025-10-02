@@ -1,6 +1,6 @@
 # Assistente de Treinos com IA
 
-Este é um aplicativo completo que atua como um "Assistente de Treinos com IA", projetado para gerar treinos personalizados com base nos objetivos, nível de experiência, equipamentos disponíveis e restrições de cada usuário. O aplicativo é composto por um frontend React e um backend Node.js com Express, utilizando PostgreSQL como banco de dados e a API da OpenAI para a inteligência artificial.
+Este é um aplicativo completo que atua como um "Assistente de Treinos com IA", projetado para gerar treinos personalizados com base nos objetivos, nível de experiência, equipamentos disponíveis e restrições de cada usuário. O aplicativo é composto por um frontend React e um backend Node.js com Express, utilizando PostgreSQL como banco de dados e a API Gemini para a inteligência artificial.
 
 ## Funcionalidades Essenciais
 
@@ -15,7 +15,7 @@ Este é um aplicativo completo que atua como um "Assistente de Treinos com IA", 
 
 - **Frontend:** React (com Vite), Tailwind CSS, Lucide React, React Router.
 - **Backend:** Node.js, Express, PostgreSQL, Prisma ORM, JWT para autenticação.
-- **Inteligência Artificial:** OpenAI API (GPT-4).
+- **Inteligência Artificial:** Gemini).
 - **Autenticação:** JWT (JSON Web Tokens).
 
 ## Estrutura do Projeto
@@ -38,7 +38,7 @@ Certifique-se de ter as seguintes ferramentas instaladas:
 - npm ou Yarn
 - PostgreSQL (servidor de banco de dados)
 - Git
-- Uma chave de API da OpenAI
+- Uma chave de API do Google
 
 ### 2. Configuração do Backend
 
