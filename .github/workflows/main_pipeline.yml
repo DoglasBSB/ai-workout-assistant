@@ -1,0 +1,128 @@
+# .github/workflows/main_pipeline.yml
+
+name: Pipeline Principal (Deploy e QA Preditivo)
+
+# Gatilhos (Triggers) para toda a pipeline
+on:
+  # Para o deploy do frontend
+  push:
+    branches:
+      - main
+      
+  # Para a predição de risco de QA
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      
+  # Para o re-treinamento do modelo de QA
+  schedule:
+    - cron: '0 2 * * 0' # Todo domingo às 02:00 UTC
+
+# Permissões necessárias para os jobs
+permissions:
+  contents: write       # Para o bot de QA fazer commit do modelo
+  pull-requests: write  # Para o bot de QA postar comentários
+
+# Definição dos Jobs
+jobs:
+  #=================================================#
+  #    🚀 JOB 1: DEPLOY DO FRONTEND NO NETLIFY      #
+  #=================================================#
+  build-and-deploy-frontend:
+    name: Build e Deploy do Frontend
+    # Condição: Só roda se o evento for um PUSH para a branch MAIN
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependências do Frontend
+        run: npm install
+        working-directory: ./frontend
+
+      - name: Build do Frontend
+        run: npm run build
+        working-directory: ./frontend
+
+      - name: Deploy no Netlify
+        uses: nwtgck/actions-netlify@v2
+        with:
+          publish-dir: './frontend/dist'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          netlify-site-id: ${{ secrets.NETLIFY_SITE_ID }}
+
+  #=================================================#
+  #     🗓️ JOB 2: RETREINAMENTO DO MODELO QA        #
+  #=================================================#
+  retrain_qa_model:
+    name: Re-treinar Modelo de QA Preditivo
+    # Condição: Só roda se o evento for um SCHEDULE
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./qa_pipeline
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+      - name: Configurar Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - name: Instalar dependências Python
+        run: pip install -r requirements.txt
+      - name: Extrair dados e treinar modelo
+      # Passa os segredos para o ambiente do script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          NOTION_SECRET: ${{ secrets.NOTION_SECRET }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        run: |
+          python extrair_dados_reais.py
+          python treinar_modelo.py
+      - name: Commit do novo modelo
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'actions@github.com'
+          cd ../.. # Volta para a raiz do projeto
+          git add qa_pipeline/modelo_preditivo.joblib qa_pipeline/model_columns.joblib qa_pipeline/dados_treino_unificados.csv
+          git diff --staged --quiet || git commit -m "chore(model): Re-treina modelo com dados mais recentes"
+          git push
+
+  #=================================================#
+  #   🤖 JOB 3: PREDIÇÃO DE RISCO EM PULL REQUEST   #
+  #=================================================#
+  predict_risk_on_pr:
+    name: Analisar Risco de QA no Pull Request
+    # Condição: Só roda se o evento for um PULL REQUEST
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./qa_pipeline
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+      - name: Configurar Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - name: Instalar dependências Python
+        run: pip install -r requirements.txt
+      - name: Analisar risco do Pull Request
+        run: python integracao_github_actions.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
