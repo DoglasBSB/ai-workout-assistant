@@ -4,6 +4,7 @@ name: Pipeline Principal (Deploy e QA Preditivo)
 
 # Gatilhos (Triggers) para toda a pipeline
 on:
+  workflow_dispatch:
   # Para o deploy do frontend
   push:
     branches:
