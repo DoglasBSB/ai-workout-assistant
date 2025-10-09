@@ -115,7 +115,7 @@ function DashboardPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Assistente de Treinos</h1>
-                <p className="text-sm text-gray-600">Bem-vindo, {user?.name || 'Usuário'}!</p>
+                <p className="text-sm text-gray-600">Bem-vindo (a), {user?.name || 'Usuário'}!</p>
               </div>
             </div>
             
