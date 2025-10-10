@@ -1,4 +1,4 @@
-# 2_treinar_modelo.py
+# qa_pipeline/2_treinar_modelo.py (Versão Corrigida)
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -10,10 +10,14 @@ print("PASSO 2: Iniciando o treinamento do modelo...")
 NOME_ARQUIVO_DADOS = "dados_treino_unificados.csv"
 df = pd.read_csv(NOME_ARQUIVO_DADOS)
 
-# ✅ ALTERAÇÃO AQUI: Removendo a linha de 'modulo_afetado'
-df['prioridade'].fillna('Nenhuma', inplace=True)
+# ✅ CORREÇÃO AQUI: A forma moderna de fazer o fillna, sem warnings.
+df['prioridade'] = df['prioridade'].fillna('Nenhuma')
 
 df_encoded = pd.get_dummies(df, columns=['autor_do_pr', 'prioridade'], drop_first=True)
+
+# Verifica se a coluna 'gerou_bug' existe antes de continuar
+if 'gerou_bug' not in df_encoded.columns:
+    raise ValueError("A coluna 'gerou_bug' não foi encontrada no dataset. Verifique o passo de união dos dados.")
 
 X = df_encoded.drop(['gerou_bug'], axis=1)
 y = df_encoded['gerou_bug']
@@ -30,7 +34,7 @@ print("Modelo treinado com sucesso.")
 y_pred = model.predict(X_test)
 print("\n--- Avaliação do Modelo no Conjunto de Teste ---")
 print(f"Acurácia: {accuracy_score(y_test, y_pred):.2f}")
-print(classification_report(y_test, y_pred))
+print(classification_report(y_test, y_pred, zero_division=0)) # Adicionado zero_division=0 para evitar warnings
 
 NOME_ARQUIVO_MODELO = "modelo_preditivo.joblib"
 joblib.dump(model, NOME_ARQUIVO_MODELO)
