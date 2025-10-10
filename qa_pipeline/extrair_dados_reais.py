@@ -1,11 +1,11 @@
-# 1_extrair_dados_reais.py (Versão de Depuração)
+# 1_extrair_dados_reais.py (Versão Final Corrigida)
 
 import os
 import requests
 import pandas as pd
 import re
 import sys
-import json # Importa a biblioteca JSON para formatação
+import json
 
 USAR_DADOS_REAIS = True
 DADOS_TREINO_FINAL_CSV = 'dados_treino_unificados.csv'
@@ -52,49 +52,34 @@ def buscar_dados_reais_notion():
     if not all([NOTION_SECRET, DATABASE_ID]):
         print("ERRO: As variáveis de ambiente NOTION_SECRET e NOTION_DATABASE_ID são necessárias.")
         sys.exit(1)
-        
     headers = {"Authorization": f"Bearer {NOTION_SECRET}", "Content-Type": "application/json", "Notion-Version": "2022-06-28"}
     api_url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
-    
     try:
         response = requests.post(api_url, headers=headers, json={})
         response.raise_for_status()
-        
-        # ✅ NOVO CÓDIGO DE DEBUG AQUI
-        print("\n--- INÍCIO DO DEBUG DA RESPOSTA DO NOTION ---")
-        print(f"Status Code: {response.status_code}")
-        response_json = response.json()
-        print("Resposta JSON completa:")
-        print(json.dumps(response_json, indent=2))
-        print("--- FIM DO DEBUG DA RESPOSTA DO NOTION ---\n")
-        
-        bugs_data = response_json.get('results', [])
-        
+        bugs_data = response.json().get('results', [])
     except requests.exceptions.RequestException as e:
-        print(f"Erro ao buscar bugs do Notion.")
-        if e.response is not None:
-            print(f"Status Code: {e.response.status_code}")
-            print(f"Resposta da API: {e.response.text}")
+        print(f"Erro ao buscar bugs do Notion: {e.response.text}")
         sys.exit(1)
-
     lista_de_bugs = []
     for bug in bugs_data:
         properties = bug.get('properties', {})
         try:
-            card_id = properties.get('Nº ID', {}).get('title', [{}])[0].get('plain_text', '')
+            # ✅ CORREÇÃO FINAL AQUI: Usando 'Título' como a fonte do ID do bug.
+            card_id = properties.get('Título', {}).get('title', [{}])[0].get('plain_text', '')
             prioridade = properties.get('Criticidade', {}).get('select', {}).get('name')
             if card_id:
                 lista_de_bugs.append({'id_do_card': card_id, 'prioridade': prioridade})
         except (TypeError, IndexError):
             continue
-            
     print(f"   - Encontrados {len(lista_de_bugs)} bugs no Notion.")
     return pd.DataFrame(lista_de_bugs)
 
 def unir_e_preparar_dados(df_github, df_notion):
     print("\nIniciando a união e rotulagem dos dados...")
     def extrair_id_notion(titulo):
-        match = re.search(r'\(notion:(BUG-\d+)\)', str(titulo))
+        # A extração do ID do PR continua a mesma, procurando por (notion:BUG-X)
+        match = re.search(r'\(notion:(BUGS-\d+)\)', str(titulo)) # Ajustado para o prefixo BUGS-
         return match.group(1) if match else None
     df_github['id_notion_linkado'] = df_github['titulo_do_pr'].apply(extrair_id_notion)
     lista_de_bugs_reais = df_notion['id_do_card'].tolist()
@@ -107,16 +92,12 @@ def unir_e_preparar_dados(df_github, df_notion):
     print(f"Distribuição de bugs no dataset final:\n{df_final['gerou_bug'].value_counts()}")
 
 def main():
-    if USAR_DADOS_REAIS:
-        df_github_prs = buscar_dados_reais_github()
-        df_notion_bugs = buscar_dados_reais_notion()
-        if df_notion_bugs.empty:
-            print("\nAVISO: Nenhum bug encontrado no Notion. O processo de treinamento será interrompido.")
-            sys.exit(0)
-        unir_e_preparar_dados(df_github_prs, df_notion_bugs)
-    else:
-        print("Modo Mock ainda disponível para testes.")
-        pass
+    df_github_prs = buscar_dados_reais_github()
+    df_notion_bugs = buscar_dados_reais_notion()
+    if df_notion_bugs.empty:
+        print("\nAVISO: Nenhum bug foi encontrado ou lido do Notion. O processo de treinamento será interrompido.")
+        sys.exit(0)
+    unir_e_preparar_dados(df_github_prs, df_notion_bugs)
 
 if __name__ == "__main__":
     main()
