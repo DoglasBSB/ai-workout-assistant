@@ -9,7 +9,12 @@ import HistoryPage from '../pages/HistoryPage';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 
 const PrivateRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <div>Carregando...</div>;
+  }
+
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
