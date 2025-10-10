@@ -96,11 +96,11 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions Bot'
           git config --global user.email 'actions@github.com'
-          cd ../.. # Volta para a raiz do projeto
+          cd .. 
           git add qa_pipeline/modelo_preditivo.joblib qa_pipeline/model_columns.joblib qa_pipeline/dados_treino_unificados.csv
           git diff --staged --quiet || git commit -m "chore(model): Re-treina modelo com dados mais recentes"
           git push
-
+          
   #=================================================#
   #   🤖 JOB 3: PREDIÇÃO DE RISCO EM PULL REQUEST   #
   #=================================================#
