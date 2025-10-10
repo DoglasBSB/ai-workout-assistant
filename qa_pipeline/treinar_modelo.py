@@ -1,4 +1,4 @@
-# qa_pipeline/2_treinar_modelo.py (Versão Final Robusta)
+# qa_pipeline/2_treinar_modelo.py (Versão com Tipo de Commit)
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -12,14 +12,17 @@ NOME_ARQUIVO_DADOS = "dados_treino_unificados.csv"
 try:
     df = pd.read_csv(NOME_ARQUIVO_DADOS)
 except FileNotFoundError:
-    print(f"ERRO: Arquivo '{NOME_ARQUIVO_DADOS}' não encontrado. O script de extração falhou ou não gerou dados.")
-    sys.exit(1)
+    sys.exit(f"ERRO: Arquivo '{NOME_ARQUIVO_DADOS}' não encontrado.")
 
+# Preenche valores nulos para as colunas categóricas
 df['prioridade'] = df['prioridade'].fillna('Nenhuma')
-df_encoded = pd.get_dummies(df, columns=['autor_do_pr', 'prioridade'], drop_first=True)
+df['tipo_commit'] = df['tipo_commit'].fillna('outro') # ✅ ALTERAÇÃO AQUI
+
+# ✅ ALTERAÇÃO AQUI: Adiciona 'tipo_commit' à lista de colunas a serem codificadas
+df_encoded = pd.get_dummies(df, columns=['autor_do_pr', 'prioridade', 'tipo_commit'], drop_first=True)
 
 if 'gerou_bug' not in df_encoded.columns:
-    sys.exit("ERRO: A coluna 'gerou_bug' não foi encontrada no dataset. Verifique o passo de união dos dados.")
+    sys.exit("ERRO: A coluna 'gerou_bug' não foi encontrada no dataset.")
 
 X = df_encoded.drop(['gerou_bug'], axis=1)
 y = df_encoded['gerou_bug']
@@ -27,24 +30,20 @@ y = df_encoded['gerou_bug']
 MODEL_COLUMNS = X.columns
 joblib.dump(MODEL_COLUMNS, 'model_columns.joblib')
 
-# ✅ NOVA VERIFICAÇÃO INTELIGENTE AQUI
-# Verifica se a classe menos comum tem pelo menos 2 membros para permitir a estratificação.
 min_class_count = y.value_counts().min()
 stratify_option = y if min_class_count >= 2 else None
 
 if stratify_option is None:
-    print(f"\nAVISO: A menor classe tem apenas {min_class_count} membro(s). A estratificação será desativada para evitar erros.\n")
+    print(f"\nAVISO: A menor classe tem apenas {min_class_count} membro(s). A estratificação será desativada.\n")
 
-# Usa a opção de estratificação definida acima
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=stratify_option)
 
 model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
 model.fit(X_train, y_train)
 print("Modelo treinado com sucesso.")
 
-# Prevenção de erro caso o conjunto de teste seja muito pequeno e não tenha todas as classes
 if len(y_test.unique()) < 2:
-    print("\nAVISO: O conjunto de teste não contém ambas as classes (bugs e não-bugs), a avaliação de performance será limitada.")
+    print("\nAVISO: O conjunto de teste não contém ambas as classes, a avaliação será limitada.")
 
 y_pred = model.predict(X_test)
 print("\n--- Avaliação do Modelo no Conjunto de Teste ---")
