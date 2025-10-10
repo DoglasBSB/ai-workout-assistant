@@ -103,24 +103,6 @@ exports.generateWorkout = async (req, res) => {
   }
 };
 
-/* exports.saveWorkout = async (req, res) => {
-  const userId = req.user;
-  const { workout } = req.body; 
-
-  try {
-    const savedWorkout = await prisma.workout.create({
-      data: {
-        userId,
-        workoutData: workout,
-      },
-    });
-    res.status(201).json({ message: "Treino salvo com sucesso!", workout: savedWorkout });
-  } catch (error) {
-    console.error("Erro ao salvar treino:", error);
-    res.status(500).json({ message: "Erro ao salvar o treino." });
-  }
-}; */
-
 exports.saveWorkout = async (req, res) => {
   const userId = req.user;
   const { workout, workoutId } = req.body; // workoutId é opcional
