@@ -1,4 +1,4 @@
-autor_do_pr,linhas_adicionadas,linhas_removidas,arquivos_alterados,prioridade,gerou_bug
-DoglasBSB,65,107,7,,0
-DoglasBSB,2,1,2,,1
-DoglasBSB,1,1,1,,0
+autor_do_pr,linhas_adicionadas,linhas_removidas,arquivos_alterados,tipo_commit,prioridade,gerou_bug
+DoglasBSB,65,107,7,fix,,0
+DoglasBSB,2,1,2,outro,,1
+DoglasBSB,1,1,1,outro,,0
