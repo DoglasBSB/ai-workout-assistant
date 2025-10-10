@@ -1,4 +1,4 @@
-# 1_extrair_dados_reais.py (Versão Final Corrigida)
+# 1_extrair_dados_reais.py (Versão Definitiva)
 
 import os
 import requests
@@ -11,12 +11,12 @@ USAR_DADOS_REAIS = True
 DADOS_TREINO_FINAL_CSV = 'dados_treino_unificados.csv'
 
 def buscar_dados_reais_github():
+    # ... (esta função está correta e permanece a mesma)
     print("-> MODO REAL: Buscando dados da API do GitHub...")
     TOKEN = os.getenv('GITHUB_TOKEN')
     REPO = os.getenv('GITHUB_REPOSITORY')
     if not all([TOKEN, REPO]):
-        print("ERRO: Variáveis de ambiente GITHUB_TOKEN e GITHUB_REPOSITORY são necessárias.")
-        sys.exit(1)
+        sys.exit("ERRO: Variáveis de ambiente GITHUB_TOKEN e GITHUB_REPOSITORY são necessárias.")
     headers = {'Authorization': f'Bearer {TOKEN}'}
     api_url = f"https://api.github.com/repos/{REPO}/pulls?state=closed&per_page=100"
     try:
@@ -24,8 +24,7 @@ def buscar_dados_reais_github():
         response.raise_for_status()
         prs_data = response.json()
     except requests.exceptions.RequestException as e:
-        print(f"Erro ao buscar PRs do GitHub: {e}")
-        sys.exit(1)
+        sys.exit(f"Erro ao buscar PRs do GitHub: {e}")
     lista_de_prs = []
     for pr in prs_data:
         pr_detail_url = pr['url']
@@ -50,8 +49,7 @@ def buscar_dados_reais_notion():
     NOTION_SECRET = os.getenv('NOTION_SECRET')
     DATABASE_ID = os.getenv('NOTION_DATABASE_ID')
     if not all([NOTION_SECRET, DATABASE_ID]):
-        print("ERRO: As variáveis de ambiente NOTION_SECRET e NOTION_DATABASE_ID são necessárias.")
-        sys.exit(1)
+        sys.exit("ERRO: As variáveis de ambiente NOTION_SECRET e NOTION_DATABASE_ID são necessárias.")
     headers = {"Authorization": f"Bearer {NOTION_SECRET}", "Content-Type": "application/json", "Notion-Version": "2022-06-28"}
     api_url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
     try:
@@ -59,16 +57,20 @@ def buscar_dados_reais_notion():
         response.raise_for_status()
         bugs_data = response.json().get('results', [])
     except requests.exceptions.RequestException as e:
-        print(f"Erro ao buscar bugs do Notion: {e.response.text}")
-        sys.exit(1)
+        sys.exit(f"Erro ao buscar bugs do Notion: {e.response.text}")
     lista_de_bugs = []
     for bug in bugs_data:
         properties = bug.get('properties', {})
         try:
-            # ✅ CORREÇÃO FINAL AQUI: Usando 'Título' como a fonte do ID do bug.
-            card_id = properties.get('Título', {}).get('title', [{}])[0].get('plain_text', '')
-            prioridade = properties.get('Criticidade', {}).get('select', {}).get('name')
-            if card_id:
+            # ✅ CORREÇÃO DEFINITIVA AQUI: Lendo a propriedade 'ID' do tipo 'unique_id'
+            unique_id_prop = properties.get('ID', {}).get('unique_id', {})
+            prefix = unique_id_prop.get('prefix')
+            number = unique_id_prop.get('number')
+            
+            # Só continua se conseguiu extrair o prefixo e o número
+            if prefix and number is not None:
+                card_id = f"{prefix}-{number}" # Constrói o ID (ex: "BUGS-1")
+                prioridade = properties.get('Criticidade', {}).get('select', {}).get('name')
                 lista_de_bugs.append({'id_do_card': card_id, 'prioridade': prioridade})
         except (TypeError, IndexError):
             continue
@@ -78,8 +80,8 @@ def buscar_dados_reais_notion():
 def unir_e_preparar_dados(df_github, df_notion):
     print("\nIniciando a união e rotulagem dos dados...")
     def extrair_id_notion(titulo):
-        # A extração do ID do PR continua a mesma, procurando por (notion:BUG-X)
-        match = re.search(r'\(notion:(BUGS-\d+)\)', str(titulo)) # Ajustado para o prefixo BUGS-
+        # Procurando pelo formato BUGS-1, BUGS-2, etc.
+        match = re.search(r'\(notion:(BUGS-\d+)\)', str(titulo))
         return match.group(1) if match else None
     df_github['id_notion_linkado'] = df_github['titulo_do_pr'].apply(extrair_id_notion)
     lista_de_bugs_reais = df_notion['id_do_card'].tolist()
@@ -95,7 +97,7 @@ def main():
     df_github_prs = buscar_dados_reais_github()
     df_notion_bugs = buscar_dados_reais_notion()
     if df_notion_bugs.empty:
-        print("\nAVISO: Nenhum bug foi encontrado ou lido do Notion. O processo de treinamento será interrompido.")
+        print("\nAVISO: Nenhum bug foi lido do Notion. O processo de treinamento será interrompido.")
         sys.exit(0)
     unir_e_preparar_dados(df_github_prs, df_notion_bugs)
 
