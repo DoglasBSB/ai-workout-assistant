@@ -1,4 +1,4 @@
-# 1_extrair_dados_reais.py (Versão Definitiva)
+# 1_extrair_dados_reais.py (Versão com Tipo de Commit)
 
 import os
 import requests
@@ -10,8 +10,14 @@ import json
 USAR_DADOS_REAIS = True
 DADOS_TREINO_FINAL_CSV = 'dados_treino_unificados.csv'
 
+# ✅ NOVA FUNÇÃO: Para extrair o tipo de commit (feat, fix, etc.) do título
+def extrair_tipo_commit(titulo):
+    match = re.search(r'^(\w+)(?:\(.*\))?:', str(titulo))
+    if match:
+        return match.group(1)
+    return 'outro' # Retorna 'outro' se não seguir o padrão
+
 def buscar_dados_reais_github():
-    # ... (esta função está correta e permanece a mesma)
     print("-> MODO REAL: Buscando dados da API do GitHub...")
     TOKEN = os.getenv('GITHUB_TOKEN')
     REPO = os.getenv('GITHUB_REPOSITORY')
@@ -32,12 +38,16 @@ def buscar_dados_reais_github():
             detail_response = requests.get(pr_detail_url, headers=headers)
             detail_response.raise_for_status()
             pr_detail = detail_response.json()
+            
+            titulo_pr = pr_detail.get('title') # Pega o título
+            
             lista_de_prs.append({
                 'autor_do_pr': pr_detail.get('user', {}).get('login'),
-                'titulo_do_pr': pr_detail.get('title'),
+                'titulo_do_pr': titulo_pr,
                 'linhas_adicionadas': pr_detail.get('additions', 0),
                 'linhas_removidas': pr_detail.get('deletions', 0),
-                'arquivos_alterados': pr_detail.get('changed_files', 0)
+                'arquivos_alterados': pr_detail.get('changed_files', 0),
+                'tipo_commit': extrair_tipo_commit(titulo_pr) # ✅ ALTERAÇÃO AQUI: Adiciona a nova feature
             })
         except requests.exceptions.RequestException:
             continue
@@ -45,6 +55,7 @@ def buscar_dados_reais_github():
     return pd.DataFrame(lista_de_prs)
 
 def buscar_dados_reais_notion():
+    # ... (esta função não precisa de alteração)
     print("-> MODO REAL: Buscando dados da API do Notion...")
     NOTION_SECRET = os.getenv('NOTION_SECRET')
     DATABASE_ID = os.getenv('NOTION_DATABASE_ID')
@@ -62,14 +73,11 @@ def buscar_dados_reais_notion():
     for bug in bugs_data:
         properties = bug.get('properties', {})
         try:
-            # ✅ CORREÇÃO DEFINITIVA AQUI: Lendo a propriedade 'ID' do tipo 'unique_id'
             unique_id_prop = properties.get('ID', {}).get('unique_id', {})
             prefix = unique_id_prop.get('prefix')
             number = unique_id_prop.get('number')
-            
-            # Só continua se conseguiu extrair o prefixo e o número
             if prefix and number is not None:
-                card_id = f"{prefix}-{number}" # Constrói o ID (ex: "BUGS-1")
+                card_id = f"{prefix}-{number}"
                 prioridade = properties.get('Criticidade', {}).get('select', {}).get('name')
                 lista_de_bugs.append({'id_do_card': card_id, 'prioridade': prioridade})
         except (TypeError, IndexError):
@@ -77,23 +85,27 @@ def buscar_dados_reais_notion():
     print(f"   - Encontrados {len(lista_de_bugs)} bugs no Notion.")
     return pd.DataFrame(lista_de_bugs)
 
+
 def unir_e_preparar_dados(df_github, df_notion):
     print("\nIniciando a união e rotulagem dos dados...")
     def extrair_id_notion(titulo):
-        # Procurando pelo formato BUGS-1, BUGS-2, etc.
         match = re.search(r'\(notion:(BUGS-\d+)\)', str(titulo))
         return match.group(1) if match else None
     df_github['id_notion_linkado'] = df_github['titulo_do_pr'].apply(extrair_id_notion)
     lista_de_bugs_reais = df_notion['id_do_card'].tolist()
     df_github['gerou_bug'] = df_github['id_notion_linkado'].isin(lista_de_bugs_reais).astype(int)
     df_final = pd.merge(df_github, df_notion, left_on='id_notion_linkado', right_on='id_do_card', how='left')
-    colunas_para_treino = ['autor_do_pr', 'linhas_adicionadas', 'linhas_removidas', 'arquivos_alterados', 'prioridade', 'gerou_bug']
+    
+    # ✅ ALTERAÇÃO AQUI: Adicionando 'tipo_commit' às colunas para treino
+    colunas_para_treino = ['autor_do_pr', 'linhas_adicionadas', 'linhas_removidas', 'arquivos_alterados', 'tipo_commit', 'prioridade', 'gerou_bug']
+    
     df_final = df_final[colunas_para_treino]
     df_final.to_csv(DADOS_TREINO_FINAL_CSV, index=False)
     print(f"-> Processo concluído! Dataset final salvo em '{DADOS_TREINO_FINAL_CSV}'.")
     print(f"Distribuição de bugs no dataset final:\n{df_final['gerou_bug'].value_counts()}")
 
 def main():
+    # ... (esta função não precisa de alteração)
     df_github_prs = buscar_dados_reais_github()
     df_notion_bugs = buscar_dados_reais_notion()
     if df_notion_bugs.empty:
