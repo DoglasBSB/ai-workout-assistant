@@ -9,11 +9,13 @@ on:
   push:
     branches:
       - main
+      - develop 
       
   # Para a predição de risco de QA
   pull_request:
     branches:
       - main
+      - develop 
     paths:
       - 'backend/**'
       - 'frontend/**'
