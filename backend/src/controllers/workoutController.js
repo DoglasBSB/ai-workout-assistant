@@ -69,10 +69,9 @@ exports.generateWorkout = async (req, res) => {
   const userId = req.user; 
 
   try {
-    // --- INÍCIO DAS CORREÇÕES ---
-    // CORREÇÃO 1: Usa a classe importada e passa a API Key diretamente como string.
+  
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-    // --- FIM DAS CORREÇÕES ---
+   
 
     const profile = await prisma.profile.findUnique({
       where: { userId },
