@@ -125,7 +125,7 @@ jobs:
         working-directory: ./qa_pipeline
 
       - name: Analisar risco, postar no PR e gerar payload do Slack
-        run: python 3_integracao_github_actions.py
+        run: python integracao_github_actions.py
         working-directory: ./qa_pipeline
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
