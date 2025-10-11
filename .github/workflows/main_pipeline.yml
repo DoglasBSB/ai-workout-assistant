@@ -125,23 +125,24 @@ jobs:
         working-directory: ./qa_pipeline
 
       - name: Analisar risco, postar no PR e gerar payload do Slack
-        run: python integracao_github_actions.py
+        run: python 3_integracao_github_actions.py # Corrigido para o nome de arquivo correto
         working-directory: ./qa_pipeline
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
 
-      # (O passo de depuração 'Listar arquivos' pode ser removido ou mantido, se preferir)
       - name: Listar arquivos no workspace
         run: ls -R
 
-      # ✅ CORREÇÃO FINAL AQUI: Enviar Notificação para o Slack
+      # ✅ PASSO DE DEPURAÇÃO CRUCIAL: Mostra o conteúdo do arquivo
+      - name: Debug: Mostra o conteúdo do payload
+        run: cat ${{ github.workspace }}/qa_pipeline/slack_payload.json || echo "Arquivo de payload não encontrado ou vazio."
+
       - name: Enviar Notificação para o Slack
         if: success()
         uses: slackapi/slack-github-action@v1.26.0
         with:
-          # Usando um caminho absoluto para o arquivo de payload para remover qualquer ambiguidade.
           payload-file-path: "${{ github.workspace }}/qa_pipeline/slack_payload.json"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
