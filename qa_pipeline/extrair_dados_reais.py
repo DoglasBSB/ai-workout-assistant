@@ -10,7 +10,7 @@ import json
 USAR_DADOS_REAIS = True
 DADOS_TREINO_FINAL_CSV = 'dados_treino_unificados.csv'
 
-# ✅ NOVA FUNÇÃO: Para extrair o tipo de commit (feat, fix, etc.) do título
+
 def extrair_tipo_commit(titulo):
     match = re.search(r'^(\w+)(?:\(.*\))?:', str(titulo))
     if match:
@@ -47,7 +47,7 @@ def buscar_dados_reais_github():
                 'linhas_adicionadas': pr_detail.get('additions', 0),
                 'linhas_removidas': pr_detail.get('deletions', 0),
                 'arquivos_alterados': pr_detail.get('changed_files', 0),
-                'tipo_commit': extrair_tipo_commit(titulo_pr) # ✅ ALTERAÇÃO AQUI: Adiciona a nova feature
+                'tipo_commit': extrair_tipo_commit(titulo_pr) # 
             })
         except requests.exceptions.RequestException:
             continue
@@ -55,7 +55,7 @@ def buscar_dados_reais_github():
     return pd.DataFrame(lista_de_prs)
 
 def buscar_dados_reais_notion():
-    # ... (esta função não precisa de alteração)
+    
     print("-> MODO REAL: Buscando dados da API do Notion...")
     NOTION_SECRET = os.getenv('NOTION_SECRET')
     DATABASE_ID = os.getenv('NOTION_DATABASE_ID')
@@ -96,7 +96,7 @@ def unir_e_preparar_dados(df_github, df_notion):
     df_github['gerou_bug'] = df_github['id_notion_linkado'].isin(lista_de_bugs_reais).astype(int)
     df_final = pd.merge(df_github, df_notion, left_on='id_notion_linkado', right_on='id_do_card', how='left')
     
-    # ✅ ALTERAÇÃO AQUI: Adicionando 'tipo_commit' às colunas para treino
+   
     colunas_para_treino = ['autor_do_pr', 'linhas_adicionadas', 'linhas_removidas', 'arquivos_alterados', 'tipo_commit', 'prioridade', 'gerou_bug']
     
     df_final = df_final[colunas_para_treino]

@@ -16,9 +16,8 @@ except FileNotFoundError:
 
 # Preenche valores nulos para as colunas categóricas
 df['prioridade'] = df['prioridade'].fillna('Nenhuma')
-df['tipo_commit'] = df['tipo_commit'].fillna('outro') # ✅ ALTERAÇÃO AQUI
+df['tipo_commit'] = df['tipo_commit'].fillna('outro') 
 
-# ✅ ALTERAÇÃO AQUI: Adiciona 'tipo_commit' à lista de colunas a serem codificadas
 df_encoded = pd.get_dummies(df, columns=['autor_do_pr', 'prioridade', 'tipo_commit'], drop_first=True)
 
 if 'gerou_bug' not in df_encoded.columns:
