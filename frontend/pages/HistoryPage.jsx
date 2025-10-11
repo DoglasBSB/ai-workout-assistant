@@ -6,7 +6,7 @@ function HistoryPage() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [expanded, setExpanded] = useState({}); // controla quais dias estão expandidos
+  const [expanded, setExpanded] = useState({}); 
 
   useEffect(() => {
     const fetchHistory = async () => {
