@@ -1,4 +1,4 @@
-# qa_pipeline/3_integracao_github_actions.py (Versão Final para Slack)
+# qa_pipeline/3_integracao_github_actions.py (Versão com Arquivo de Payload)
 
 import os
 import requests
@@ -8,7 +8,7 @@ import re
 import sys
 import json
 
-# ... (as funções extrair_tipo_commit e analisar_novo_pr permanecem as mesmas) ...
+# ... (todo o início do arquivo até o if __name__ == "__main__" permanece o mesmo) ...
 def extrair_tipo_commit(titulo):
     match = re.search(r'^(\w+)(?:\(.*\))?:', str(titulo))
     if match: return match.group(1)
@@ -55,21 +55,11 @@ if __name__ == "__main__":
     REPO = os.getenv('GITHUB_REPOSITORY')
     PR_NUMBER = os.getenv('PULL_REQUEST_NUMBER')
     
-if not all([TOKEN, REPO, PR_NUMBER]):
-        print("\nVariáveis de ambiente do GitHub Actions não encontradas. Rodando com dados de exemplo locais.")
-        pr_de_alto_risco = {
-            'autor_do_pr': 'dev_junior',
-            'linhas_adicionadas': 950,
-            'linhas_removidas': 50,
-            'arquivos_alterados': 25,
-            'tipo_commit': 'feat'
-        }
-        print("\n--- Analisando um PR de ALTO RISCO (simulado) ---")
-        print(analisar_novo_pr(pr_de_alto_risco))
-else:
-        # ✅ CORREÇÃO AQUI: Todo este bloco de código precisa de indentação
-        print(f"Rodando em ambiente GitHub Actions para o PR #{PR_NUMBER} em {REPO}...")
+    if not all([TOKEN, REPO, PR_NUMBER]):
+        # Bloco de teste local não muda
+    else:
         try:
+            # Busca de dados do PR não muda
             headers = {'Authorization': f'Bearer {TOKEN}', 'Accept': 'application/vnd.github.v3+json'}
             api_url = f"https://api.github.com/repos/{REPO}/pulls/{PR_NUMBER}"
             response = requests.get(api_url, headers=headers)
@@ -91,31 +81,23 @@ else:
             requests.post(comments_url, headers=headers, json=payload_github).raise_for_status()
             print(f"Comentário postado com sucesso no Pull Request #{PR_NUMBER}.")
 
-            # ✅ ALTERAÇÃO AQUI: Gera o payload COMPLETO para o Slack
+            # Gera o payload COMPLETO para o Slack
             pr_url = pr_data.get('html_url')
             pr_title = pr_data.get('title')
             
             slack_payload = {
-                "text": f"Nova Análise de Risco de QA para o PR #{PR_NUMBER}", # Texto de fallback para notificações
+                "text": f"Nova Análise de Risco de QA para o PR #{PR_NUMBER}",
                 "blocks": [
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": f"Nova Análise de Risco de QA para o Pull Request: *<{pr_url}|#{PR_NUMBER} {pr_title}>*"
-                        }
-                    },
+                    {"type": "section", "text": {"type": "mrkdwn", "text": f"Nova Análise de Risco de QA para o Pull Request: *<{pr_url}|#{PR_NUMBER} {pr_title}>*"}},
                     {"type": "divider"},
-                    {
-                        "type": "section",
-                        "text": { "type": "mrkdwn", "text": resultado_analise }
-                    }
+                    {"type": "section", "text": { "type": "mrkdwn", "text": resultado_analise }}
                 ]
             }
 
-            # Exporta o payload como uma string JSON para o GitHub Actions
-            with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                print(f"slack_payload={json.dumps(slack_payload)}", file=f)
+            # ✅ ALTERAÇÃO AQUI: Salva o payload em um arquivo JSON
+            with open('slack_payload.json', 'w') as f:
+                json.dump(slack_payload, f)
+            print("Payload do Slack salvo em slack_payload.json")
 
         except Exception as e:
             sys.exit(f"Ocorreu um erro: {e}")

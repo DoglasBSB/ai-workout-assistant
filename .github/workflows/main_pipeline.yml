@@ -130,12 +130,12 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
 
-          # ✅ NOVO PASSO AQUI: Enviar notificação para o Slack
+         # ✅ ALTERAÇÃO AQUI: Ação do Slack agora lê o payload de um arquivo
       - name: Enviar Notificação para o Slack
         if: success()
         uses: slackapi/slack-github-action@v1.26.0
         with:
-          # Passa o payload completo que o script Python gerou
-          payload: ${{ steps.analysis.outputs.slack_payload }}
+          # Informa o caminho para o arquivo de payload
+          payload-file-path: "./qa_pipeline/slack_payload.json"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
