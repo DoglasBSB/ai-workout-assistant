@@ -108,34 +108,40 @@ jobs:
   #=================================================#
   predict_risk_on_pr:
     name: Analisar Risco de QA no Pull Request
-    # Condição: Só roda se o evento for um PULL REQUEST
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./qa_pipeline
+    
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
+
       - name: Configurar Python 3.9
         uses: actions/setup-python@v4
         with:
           python-version: 3.9
+          
       - name: Instalar dependências Python
         run: pip install -r requirements.txt
-      - name: Analisar risco do Pull Request
+        working-directory: ./qa_pipeline # Roda este comando dentro da pasta
+
+      - name: Analisar risco, postar no PR e gerar payload do Slack
         run: python integracao_github_actions.py
+        working-directory: ./qa_pipeline # Roda o script dentro da pasta
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
 
-         # ✅ ALTERAÇÃO AQUI: Ação do Slack agora lê o payload de um arquivo
+      # ✅ PASSO DE DEPURAÇÃO: Vamos listar todos os arquivos para confirmar a criação do payload
+      - name: Listar arquivos no workspace
+        run: ls -R
+
+      # ✅ PASSO CORRIGIDO: Enviar Notificação para o Slack
       - name: Enviar Notificação para o Slack
         if: success()
         uses: slackapi/slack-github-action@v1.26.0
         with:
-          # Informa o caminho para o arquivo de payload
-          payload-file-path: "./qa_pipeline/slack_payload.json"
+          # O caminho agora é explícito a partir da raiz do repositório
+          payload-file-path: "qa_pipeline/slack_payload.json"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
