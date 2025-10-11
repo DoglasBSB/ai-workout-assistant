@@ -1,4 +1,4 @@
-# .github/workflows/main_pipeline.yml
+# .github/workflows/pipeline.yml
 
 name: Pipeline Principal (Deploy e QA Preditivo)
 
@@ -9,20 +9,20 @@ on:
   push:
     branches:
       - main
-      - develop 
+      - develop
       
   # Para a predição de risco de QA
   pull_request:
     branches:
       - main
-      - develop 
+      - develop
     paths:
       - 'backend/**'
       - 'frontend/**'
       
   # Para o re-treinamento do modelo de QA
   schedule:
-    - cron: '0 0 * * 5' # Roda todo sábado às 00:00 UTC (corresponde a sexta-feira 21h no Brasil)
+    - cron: '0 2 * * 0' # Todo domingo às 02:00 UTC
 
 # Permissões necessárias para os jobs
 permissions:
@@ -61,8 +61,8 @@ jobs:
         with:
           publish-dir: './frontend/dist'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          netlify-site-id: ${{ secrets.NETLIFY_SITE_ID }}
+          #netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          #netlify-site-id: ${{ secrets.NETLIFY_SITE_ID }}
 
   #=================================================#
   #     🗓️ JOB 2: RETREINAMENTO DO MODELO QA        #
@@ -129,37 +129,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
-
-          # ✅ NOVO PASSO AQUI: Enviar notificação para o Slack
-      - name: Enviar Notificação para o Slack
-        # Só executa se o passo anterior foi bem-sucedido
-        if: success()
-        uses: slackapi/slack-github-action@v1.26.0
-        with:
-          # Usa o output 'slack_message' que nosso script Python gerou
-          payload: |
-            {
-              "text": "Nova Análise de Risco de QA para o PR #${{ github.event.pull_request.number }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "Nova Análise de Risco de QA para o Pull Request: *<${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}>*"
-                  }
-                },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "${{ steps.analysis.outputs.slack_message }}"
-                  }
-                }
-              ]
-            }
-        env:
-          # Usa o segredo que configuramos no repositório
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
