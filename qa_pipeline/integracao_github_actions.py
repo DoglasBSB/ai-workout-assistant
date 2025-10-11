@@ -100,11 +100,13 @@ if __name__ == "__main__":
             response_comment.raise_for_status()
             print(f"Comentário postado com sucesso no Pull Request #{PR_NUMBER}.")
 
-            # ✅ ALTERAÇÃO FINAL AQUI: Exporta a mensagem para o GitHub Actions
-            # Esta linha especial cria um "output" que podemos usar nos passos seguintes do workflow.
+            # ✅ CORRECTION HERE: Perform the replacements BEFORE the f-string.
+            # 1. First, create a variable with the formatted message for Slack.
+            slack_message_formatted = resultado_analise.replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D')
+            
+            # 2. Then, use that clean variable inside the f-string.
             with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                # Usamos uma string de escape para lidar com múltiplas linhas
-                print(f"slack_message={resultado_analise.replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D')}", file=f)
+                print(f"slack_message={slack_message_formatted}", file=f)
 
         except requests.exceptions.RequestException as e:
             sys.exit(f"Erro ao interagir com a API do GitHub: {e}")
