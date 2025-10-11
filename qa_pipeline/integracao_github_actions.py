@@ -55,11 +55,21 @@ if __name__ == "__main__":
     REPO = os.getenv('GITHUB_REPOSITORY')
     PR_NUMBER = os.getenv('PULL_REQUEST_NUMBER')
     
-    if not all([TOKEN, REPO, PR_NUMBER]):
-        # ... (bloco de teste local não muda) ...
-    else:
+if not all([TOKEN, REPO, PR_NUMBER]):
+        print("\nVariáveis de ambiente do GitHub Actions não encontradas. Rodando com dados de exemplo locais.")
+        pr_de_alto_risco = {
+            'autor_do_pr': 'dev_junior',
+            'linhas_adicionadas': 950,
+            'linhas_removidas': 50,
+            'arquivos_alterados': 25,
+            'tipo_commit': 'feat'
+        }
+        print("\n--- Analisando um PR de ALTO RISCO (simulado) ---")
+        print(analisar_novo_pr(pr_de_alto_risco))
+else:
+        # ✅ CORREÇÃO AQUI: Todo este bloco de código precisa de indentação
+        print(f"Rodando em ambiente GitHub Actions para o PR #{PR_NUMBER} em {REPO}...")
         try:
-            # ... (parte de busca de dados do PR não muda) ...
             headers = {'Authorization': f'Bearer {TOKEN}', 'Accept': 'application/vnd.github.v3+json'}
             api_url = f"https://api.github.com/repos/{REPO}/pulls/{PR_NUMBER}"
             response = requests.get(api_url, headers=headers)
