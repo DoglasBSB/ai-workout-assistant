@@ -1,4 +1,4 @@
-# qa_pipeline/3_integracao_github_actions.py (Versão com Arquivo de Payload)
+# qa_pipeline/3_integracao_github_actions.py (Com a Indentação Corrigida)
 
 import os
 import requests
@@ -57,7 +57,10 @@ if __name__ == "__main__":
     
     if not all([TOKEN, REPO, PR_NUMBER]):
         # Bloco de teste local não muda
+        print("\nVariáveis de ambiente do GitHub Actions não encontradas. Rodando com dados de exemplo locais.")
+        # ... (código de teste local) ...
     else:
+        # ✅ CORREÇÃO AQUI: Todo este bloco de código foi indentado corretamente
         try:
             # Busca de dados do PR não muda
             headers = {'Authorization': f'Bearer {TOKEN}', 'Accept': 'application/vnd.github.v3+json'}
@@ -94,7 +97,7 @@ if __name__ == "__main__":
                 ]
             }
 
-            # ✅ ALTERAÇÃO AQUI: Salva o payload em um arquivo JSON
+            # Salva o payload em um arquivo JSON
             with open('slack_payload.json', 'w') as f:
                 json.dump(slack_payload, f)
             print("Payload do Slack salvo em slack_payload.json")
