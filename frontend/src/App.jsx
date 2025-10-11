@@ -14,7 +14,7 @@ const PrivateRoute = ({ children }) => {
   if (loading) {
     return <div>Carregando...</div>;
   }
-
+ // correção do redirecionamento para a página de login
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
