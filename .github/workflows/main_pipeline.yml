@@ -122,26 +122,26 @@ jobs:
           
       - name: Instalar dependências Python
         run: pip install -r requirements.txt
-        working-directory: ./qa_pipeline # Roda este comando dentro da pasta
+        working-directory: ./qa_pipeline
 
       - name: Analisar risco, postar no PR e gerar payload do Slack
-        run: python integracao_github_actions.py
-        working-directory: ./qa_pipeline # Roda o script dentro da pasta
+        run: python 3_integracao_github_actions.py
+        working-directory: ./qa_pipeline
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
 
-      # ✅ PASSO DE DEPURAÇÃO: Vamos listar todos os arquivos para confirmar a criação do payload
+      # (O passo de depuração 'Listar arquivos' pode ser removido ou mantido, se preferir)
       - name: Listar arquivos no workspace
         run: ls -R
 
-      # ✅ PASSO CORRIGIDO: Enviar Notificação para o Slack
+      # ✅ CORREÇÃO FINAL AQUI: Enviar Notificação para o Slack
       - name: Enviar Notificação para o Slack
         if: success()
         uses: slackapi/slack-github-action@v1.26.0
         with:
-          # O caminho agora é explícito a partir da raiz do repositório
-          payload-file-path: "qa_pipeline/slack_payload.json"
+          # Usando um caminho absoluto para o arquivo de payload para remover qualquer ambiguidade.
+          payload-file-path: "${{ github.workspace }}/qa_pipeline/slack_payload.json"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
