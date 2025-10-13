@@ -29,23 +29,28 @@ function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [workouts, setWorkouts] = useState([]);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [generatingWorkout, setGeneratingWorkout] = useState(false);
 
   useEffect(() => {
-    const fetchWorkouts = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get('/workouts');
-        setWorkouts(response.data.workouts);
+        const [workoutsResponse, historyResponse] = await Promise.all([
+          api.get('/workouts'),
+          api.get('/workouts/history')
+        ]);
+        setWorkouts(workoutsResponse.data.workouts);
+        setHistory(historyResponse.data.history);
       } catch (err) {
-        console.error('Erro ao buscar treinos:', err);
-        setError('Não foi possível carregar seus treinos.');
+        console.error('Erro ao buscar dados do dashboard:', err);
+        setError('Não foi possível carregar seus dados.');
       } finally {
         setLoading(false);
       }
     };
-    fetchWorkouts();
+    fetchData();
   }, []);
 
   const handleGenerateNewWorkout = async () => {
@@ -91,6 +96,8 @@ function DashboardPage() {
       totalDays: 1
     };
   };
+
+  const completedWorkoutsCount = new Set(history.map(h => h.workoutId)).size;
 
   if (loading) {
     return (
@@ -362,11 +369,14 @@ function DashboardPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-green-700">Treinos Concluídos</span>
                     <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      0/{workouts.length}
+                      {completedWorkoutsCount}/{workouts.length}
                     </Badge>
                   </div>
                   <div className="w-full bg-green-200 rounded-full h-2">
-                    <div className="bg-green-600 h-2 rounded-full" style={{ width: '0%' }}></div>
+                    <div 
+                      className="bg-green-600 h-2 rounded-full transition-all duration-500 ease-in-out" 
+                      style={{ width: `${workouts.length > 0 ? (completedWorkoutsCount / workouts.length) * 100 : 0}%` }}
+                    ></div>
                   </div>
                   <p className="text-xs text-green-600">
                     Continue assim! Cada treino te aproxima dos seus objetivos.
