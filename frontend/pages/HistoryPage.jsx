@@ -51,8 +51,14 @@ function HistoryPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        
         <h2 className="text-3xl font-bold mb-6">Histórico de Treinos</h2>
-
+      <Link
+          to="/dashboard"
+          className="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mb-6"
+        >
+          Voltar para o Dashboard
+        </Link>
         {history.length === 0 ? (
           <p>Você ainda não tem treinos registrados no histórico.</p>
         ) : (
@@ -103,13 +109,6 @@ function HistoryPage() {
             ))}
           </div>
         )}
-
-        <Link
-          to="/dashboard"
-          className="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-6"
-        >
-          Voltar para o Dashboard
-        </Link>
       </div>
     </div>
   );
