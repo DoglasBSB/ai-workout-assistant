@@ -33,6 +33,8 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [generatingWorkout, setGeneratingWorkout] = useState(false);
+  const [workoutsThisWeek, setWorkoutsThisWeek] = useState(0);
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,7 +44,10 @@ function DashboardPage() {
           api.get('/workouts/history')
         ]);
         setWorkouts(workoutsResponse.data.workouts);
-        setHistory(historyResponse.data.history);
+        const historyData = historyResponse.data.history;
+        setHistory(historyData);
+        calculateWorkoutsThisWeek(historyData);
+        calculateStreak(historyData);
       } catch (err) {
         console.error('Erro ao buscar dados do dashboard:', err);
         setError('Não foi possível carregar seus dados.');
@@ -52,6 +57,52 @@ function DashboardPage() {
     };
     fetchData();
   }, []);
+
+  const calculateWorkoutsThisWeek = (historyData) => {
+    const today = new Date();
+    const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+    const lastDayOfWeek = new Date(firstDayOfWeek);
+    lastDayOfWeek.setDate(lastDayOfWeek.getDate() + 6);
+
+    const workouts = historyData.filter(h => {
+      const completedDate = new Date(h.completedAt);
+      return completedDate >= firstDayOfWeek && completedDate <= lastDayOfWeek;
+    });
+    setWorkoutsThisWeek(workouts.length);
+  };
+
+  const calculateStreak = (historyData) => {
+    if (historyData.length === 0) {
+      setStreak(0);
+      return;
+    }
+
+    const sortedHistory = [...historyData].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+    const uniqueDates = [...new Set(sortedHistory.map(h => new Date(h.completedAt).toDateString()))];
+
+    let currentStreak = 0;
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (uniqueDates.includes(today.toDateString()) || uniqueDates.includes(yesterday.toDateString())) {
+      currentStreak = 1;
+      for (let i = 1; i < uniqueDates.length; i++) {
+        const currentDate = new Date(uniqueDates[i-1]);
+        const previousDate = new Date(uniqueDates[i]);
+        const diffTime = currentDate - previousDate;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+    }
+    
+    setStreak(currentStreak);
+  };
 
   const handleGenerateNewWorkout = async () => {
     setGeneratingWorkout(true);
@@ -168,7 +219,7 @@ function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-green-100 text-sm font-medium">Esta Semana</p>
-                  <p className="text-3xl font-bold">0</p>
+                  <p className="text-3xl font-bold">{workoutsThisWeek}</p>
                 </div>
                 <div className="bg-white/20 p-3 rounded-full">
                   <Calendar className="h-6 w-6" />
@@ -182,7 +233,7 @@ function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-purple-100 text-sm font-medium">Sequência</p>
-                  <p className="text-3xl font-bold">0 dias</p>
+                  <p className="text-3xl font-bold">{streak} dias</p>
                 </div>
                 <div className="bg-white/20 p-3 rounded-full">
                   <Award className="h-6 w-6" />
