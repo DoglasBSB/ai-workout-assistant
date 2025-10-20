@@ -352,9 +352,11 @@ function QuestionnairePage() {
               >
                 Próximo
               </Button>
+
             ) : (
               <Button
-                type="submit"
+                type="button"
+                onClick={handleSubmit}
                 disabled={loading}
                 className="px-8 bg-purple-600 hover:bg-purple-700"
               >
