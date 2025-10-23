@@ -1,5 +1,3 @@
-# 1_extrair_dados_reais.py (Versão com Tipo de Commit)
-
 import os
 import requests
 import pandas as pd
@@ -15,7 +13,7 @@ def extrair_tipo_commit(titulo):
     match = re.search(r'^(\w+)(?:\(.*\))?:', str(titulo))
     if match:
         return match.group(1)
-    return 'outro' # Retorna 'outro' se não seguir o padrão
+    return 'outro'
 
 def buscar_dados_reais_github():
     print("-> MODO REAL: Buscando dados da API do GitHub...")
@@ -39,7 +37,7 @@ def buscar_dados_reais_github():
             detail_response.raise_for_status()
             pr_detail = detail_response.json()
             
-            titulo_pr = pr_detail.get('title') # Pega o título
+            titulo_pr = pr_detail.get('title')
             
             lista_de_prs.append({
                 'autor_do_pr': pr_detail.get('user', {}).get('login'),
@@ -96,7 +94,7 @@ def unir_e_preparar_dados(df_github, df_notion):
     df_github['gerou_bug'] = df_github['id_notion_linkado'].isin(lista_de_bugs_reais).astype(int)
     df_final = pd.merge(df_github, df_notion, left_on='id_notion_linkado', right_on='id_do_card', how='left')
     
-   
+   # Remover colunas "prioridade"
     colunas_para_treino = ['autor_do_pr', 'linhas_adicionadas', 'linhas_removidas', 'arquivos_alterados', 'tipo_commit', 'prioridade', 'gerou_bug']
     
     df_final = df_final[colunas_para_treino]
@@ -105,7 +103,7 @@ def unir_e_preparar_dados(df_github, df_notion):
     print(f"Distribuição de bugs no dataset final:\n{df_final['gerou_bug'].value_counts()}")
 
 def main():
-    # ... (esta função não precisa de alteração)
+    
     df_github_prs = buscar_dados_reais_github()
     df_notion_bugs = buscar_dados_reais_notion()
     if df_notion_bugs.empty:

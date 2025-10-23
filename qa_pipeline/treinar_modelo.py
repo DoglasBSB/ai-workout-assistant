@@ -37,17 +37,19 @@ if stratify_option is None:
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=stratify_option)
 
-model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
+model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced', min_samples_leaf=1, max_features='sqrt')
 model.fit(X_train, y_train)
 print("Modelo treinado com sucesso.")
 
-if len(y_test.unique()) < 2:
-    print("\nAVISO: O conjunto de teste não contém ambas as classes, a avaliação será limitada.")
-
-y_pred = model.predict(X_test)
-print("\n--- Avaliação do Modelo no Conjunto de Teste ---")
-print(f"Acurácia: {accuracy_score(y_test, y_pred):.2f}")
-print(classification_report(y_test, y_pred, zero_division=0))
+if len(X_test) > 0 and len(y_test.unique()) > 1:
+    y_pred = model.predict(X_test)
+    print("\n--- Avaliação do Modelo no Conjunto de Teste ---")
+    print(f"Acurácia: {accuracy_score(y_test, y_pred):.2f}")
+    print(classification_report(y_test, y_pred, zero_division=0))
+elif len(X_test) == 0:
+    print("\nAVISO: O conjunto de teste está vazio. Não foi possível avaliar o modelo.")
+else:
+    print(f"\nAVISO: O conjunto de teste contém apenas uma classe ({y_test.unique()}). A avaliação completa do modelo foi pulada.")
 
 NOME_ARQUIVO_MODELO = "modelo_preditivo.joblib"
 joblib.dump(model, NOME_ARQUIVO_MODELO)
