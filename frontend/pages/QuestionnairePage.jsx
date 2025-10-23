@@ -31,6 +31,16 @@ function QuestionnairePage() {
   const [error, setError] = useState('');
   const [currentStep, setCurrentStep] = useState(1);
 
+  const handlePrevStep = () => {
+  if (currentStep === 1) {
+    // Se estiver na primeira etapa, volta para a dashboard
+    navigate('/dashboard');
+  } else if (currentStep > 1) {
+    // Senão, volta para a etapa anterior
+    setCurrentStep(currentStep - 1);
+  }
+}
+
   const objectives = [
     { value: 'perda_peso', label: 'Perda de Peso', icon: '🔥' },
     { value: 'ganho_massa', label: 'Ganho de Massa Muscular', icon: '💪' },
@@ -336,8 +346,8 @@ function QuestionnairePage() {
             <Button
               type="button"
               variant="outline"
-              onClick={prevStep}
-              disabled={currentStep === 1}
+              onClick={handlePrevStep}
+              disabled={currentStep === 0}
               className="px-8"
             >
               Anterior
