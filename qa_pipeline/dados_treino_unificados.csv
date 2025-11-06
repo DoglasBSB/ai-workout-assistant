@@ -1,4 +1,6 @@
 autor_do_pr,linhas_adicionadas,linhas_removidas,arquivos_alterados,tipo_commit,prioridade,gerou_bug
+DoglasBSB,12,2,1,outro,,0
+DoglasBSB,12,2,1,fix,,1
 DoglasBSB,12,2,1,fix,,1
 DoglasBSB,1,0,1,outro,,0
 DoglasBSB,1,0,1,feat,,0
