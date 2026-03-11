@@ -224,3 +224,33 @@ exports.getWorkoutHistory = async (req, res) => {
     res.status(500).json({ message: "Erro ao buscar histórico de treinos." });
   }
 };
+
+exports.deleteWorkout = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user;
+
+  try {
+    const workout = await prisma.workout.findUnique({
+      where: { id, userId },
+    });
+
+    if (!workout) {
+      return res.status(404).json({ message: "Treino não encontrado." });
+    }
+
+    // Deletar o histórico associado e o treino em uma transação
+    await prisma.$transaction([
+      prisma.history.deleteMany({
+        where: { workoutId: id },
+      }),
+      prisma.workout.delete({
+        where: { id },
+      }),
+    ]);
+
+    res.status(200).json({ message: "Treino excluído com sucesso." });
+  } catch (error) {
+    console.error("Erro ao excluir treino:", error);
+    res.status(500).json({ message: "Erro ao excluir o treino." });
+  }
+};

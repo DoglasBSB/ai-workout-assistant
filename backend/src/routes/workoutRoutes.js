@@ -8,7 +8,8 @@ const {
   saveWorkout,
   updateWorkoutHistory,
   saveProfile,
-  getWorkoutHistory
+  getWorkoutHistory,
+  deleteWorkout
 } = require("../controllers/workoutController");
 
 const authMiddleware = require("../middleware/authMiddleware");
@@ -29,6 +30,7 @@ router.get("/history", getWorkoutHistory); // Buscar histórico de treinos
 // Treinos do usuário
 router.get("/", getWorkouts);
 router.get("/:id", getWorkoutById);
+router.delete("/:id", deleteWorkout); // Excluir um treino
 
 // Salvar treino
 router.post("/save", saveWorkout); // Novo endpoint para salvar treino sem ID
