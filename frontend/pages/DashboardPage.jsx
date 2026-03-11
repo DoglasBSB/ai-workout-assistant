@@ -22,7 +22,8 @@ import {
   History,
   Settings,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Trash2
 } from 'lucide-react';
 
 function DashboardPage() {
@@ -35,6 +36,22 @@ function DashboardPage() {
   const [generatingWorkout, setGeneratingWorkout] = useState(false);
   const [workoutsThisWeek, setWorkoutsThisWeek] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [workoutToDelete, setWorkoutToDelete] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const handleDeleteWorkout = async () => {
+    if (!workoutToDelete) return;
+
+    try {
+      await api.delete(`/workouts/${workoutToDelete}`);
+      setWorkouts(workouts.filter(w => w.id !== workoutToDelete));
+      setWorkoutToDelete(null);
+      setConfirmDelete(false);
+    } catch (err) {
+      console.error('Erro ao excluir treino:', err);
+      setError('Não foi possível excluir o treino. Tente novamente.');
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -192,6 +209,27 @@ function DashboardPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {confirmDelete && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Confirmar Exclusão</CardTitle>
+                <CardDescription>
+                  Você tem certeza que deseja excluir este treino? Essa ação não pode ser desfeita.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex justify-end space-x-4">
+                <Button variant="outline" onClick={() => setConfirmDelete(false)}>
+                  Cancelar
+                </Button>
+                <Button variant="destructive" onClick={handleDeleteWorkout}>
+                  Excluir
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertDescription>{error}</AlertDescription>
@@ -326,11 +364,10 @@ function DashboardPage() {
                       return (
                         <div
                           key={workout.id}
-                          className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer group"
-                          onClick={() => navigate(`/workout/${workout.id}`)}
+                          className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 group"
                         >
                           <div className="flex items-center justify-between">
-                            <div className="flex-1">
+                            <div className="flex-1 cursor-pointer" onClick={() => navigate(`/workout/${workout.id}`)}>
                               <div className="flex items-center space-x-3 mb-2">
                                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                                   {preview.focus}
@@ -350,7 +387,21 @@ function DashboardPage() {
                                 </div>
                               </div>
                             </div>
-                            <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                            <div className="flex items-center">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setWorkoutToDelete(workout.id);
+                                  setConfirmDelete(true);
+                                }}
+                                className="text-gray-400 hover:text-red-500"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </Button>
+                              <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                            </div>
                           </div>
                         </div>
                       );
