@@ -7,6 +7,8 @@ import { Label } from '~/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '~/components/ui/card';
 import { Alert, AlertDescription } from '~/components/ui/alert';
 import { Dumbbell, Mail, Lock, AlertCircle } from 'lucide-react';
+import backgroundLogin from '../images/fundo-login.png';
+
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -36,8 +38,10 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat p-4"
+   style={{ backgroundImage: `url(${backgroundLogin})` }} >
+
+     <div className="w-full max-w-md">
         {/* Logo e Título */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
