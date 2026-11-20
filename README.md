@@ -101,9 +101,9 @@ Para garantir a qualidade e a estabilidade da API, o projeto utiliza Jest e Supe
 
 A partir da pasta /backend, execute o seguinte comando:
 npm test
+
 ## 📄 Licença
 Este projeto está licenciado sob a Licença MIT.
 
-![Linguagem](https://img.shields.io/github/languages/top/doglasbsb/ai-workout-assistant?style=for-the-badge)
 ![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-blue?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow?style=for-the-badge)
